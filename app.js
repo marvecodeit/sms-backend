@@ -20,12 +20,20 @@ const submissionRoutes = require("./routes/submissionRoutes");
 const app = express();
 
 // ── Middleware ────────────────────────────────────────────
+const ALLOWED_ORIGINS = [
+  // Production
+  'https://mbsonline.vercel.app',
+  // Local development
+  /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/,
+  /^http:\/\/(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)\d{1,3}\.\d{1,3}(:\d+)?$/,
+];
+
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, curl, Postman)
     if (!origin) return callback(null, true);
-    // Allow localhost and any device on the local network
-    const allowed = /^http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3})(:\d+)?$/.test(origin);
+    const allowed = ALLOWED_ORIGINS.some(o =>
+      typeof o === 'string' ? o === origin : o.test(origin)
+    );
     callback(allowed ? null : new Error(`CORS blocked: ${origin}`), allowed);
   },
   credentials: true,

@@ -10,6 +10,8 @@ const {
   createSecretary,
   getClasses,
   getStudents,
+  searchStudents,
+  getStudentById,
   getTeachers,
   assignTeacherToClass,
   updateClass,
@@ -53,6 +55,9 @@ router.put("/teachers/:id/suspend",    protect, authorizeRoles(ROLES.ADMIN, ROLE
 router.delete("/teachers/:id",         protect, authorizeRoles(ROLES.ADMIN, ROLES.DEVELOPER, ROLES.PRINCIPAL, ROLES.HOA), deleteTeacher);
 
 // ── STUDENT MANAGEMENT ───────────────────────────────────
+// NOTE: /students/search MUST be before /students/:id to avoid param conflict
+router.get("/students/search", protect, authorizeRoles(ROLES.ADMIN, ROLES.DEVELOPER, ROLES.PRINCIPAL, ROLES.HOA, ROLES.SECRETARY, ROLES.TEACHER), searchStudents);
+router.get("/students/:id",    protect, authorizeRoles(ROLES.ADMIN, ROLES.DEVELOPER, ROLES.PRINCIPAL, ROLES.HOA, ROLES.SECRETARY, ROLES.TEACHER), getStudentById);
 router.delete("/students/:id", protect, authorizeRoles(ROLES.ADMIN, ROLES.DEVELOPER, ROLES.PRINCIPAL, ROLES.HOA), deleteStudent);
 
 // ── CLASS MANAGEMENT ─────────────────────────────────────

@@ -190,11 +190,60 @@ const getClasses = async (req, res) => {
 // ── GET STUDENTS ────────────────────────
 const getStudents = async (req, res) => {
   try {
-    const students = await Student.find()
-      .populate("class", "name")
+    const filter = {};
+    if (req.query.classId) filter.class = req.query.classId;
+
+    const students = await Student.find(filter)
+      .populate("class", "name subjects")
       .sort({ createdAt: -1 });
 
     res.status(200).json({ success: true, students });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ── SEARCH STUDENTS ──────────────────────
+const searchStudents = async (req, res) => {
+  try {
+    const { q, classId, limit = 20 } = req.query;
+
+    if (!q || String(q).trim().length < 1) {
+      return res.status(400).json({ success: false, message: "Query param 'q' is required." });
+    }
+
+    const regex  = new RegExp(String(q).trim(), "i");
+    const filter = {
+      $or: [
+        { fullname:           regex },
+        { registrationNumber: regex },
+        { email:              regex },
+      ],
+    };
+    if (classId) filter.class = classId;
+
+    const students = await Student.find(filter)
+      .populate("class", "name subjects")
+      .limit(Number(limit))
+      .sort({ fullname: 1 });
+
+    res.status(200).json({ success: true, count: students.length, students });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ── GET SINGLE STUDENT BY ID ─────────────
+const getStudentById = async (req, res) => {
+  try {
+    const student = await Student.findById(req.params.id)
+      .populate("class", "name subjects");
+
+    if (!student) {
+      return res.status(404).json({ success: false, message: "Student not found." });
+    }
+
+    res.status(200).json({ success: true, student });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -556,6 +605,8 @@ module.exports = {
   assignTeacherToClass,
   getClasses,
   getStudents,
+  searchStudents,
+  getStudentById,
   getTeachers,
   getTeacherClasses,
   suspendTeacher,

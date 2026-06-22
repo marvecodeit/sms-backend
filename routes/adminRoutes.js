@@ -12,6 +12,7 @@ const {
   getStudents,
   searchStudents,
   getStudentById,
+  resetSystem,
   getTeachers,
   assignTeacherToClass,
   updateClass,
@@ -30,8 +31,9 @@ const ROLES = require("../utils/roles");
 const router = express.Router();
 
 // ── DEVELOPER ONLY ───────────────────────────────────────
-router.post("/create-admin", protect, authorizeRoles(ROLES.DEVELOPER), createAdmin);
-router.get("/key-users",     protect, authorizeRoles(ROLES.DEVELOPER), getKeyUsers);
+router.post("/create-admin",   protect, authorizeRoles(ROLES.DEVELOPER), createAdmin);
+router.get("/key-users",       protect, authorizeRoles(ROLES.DEVELOPER), getKeyUsers);
+router.delete("/reset-system", protect, authorizeRoles(ROLES.DEVELOPER), resetSystem);
 
 // ── ADMIN: Create Principal ──────────────────────────────
 router.post("/create-principal", protect, authorizeRoles(ROLES.ADMIN, ROLES.DEVELOPER), createPrincipal);

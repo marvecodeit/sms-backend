@@ -9,6 +9,11 @@ const Developer = require("../models/Developer");
 const Result = require("../models/Result");
 const Attendance = require("../models/Attendance");
 const Payment = require("../models/Payment");
+const Fee = require("../models/Fee");
+const Assignment = require("../models/Assignment");
+const Submission = require("../models/Submission");
+const CumulativeResult = require("../models/CumulativeResult");
+const OPayPending = require("../models/OPayPending");
 const generateToken = require("../utils/generateToken");
 const ROLES = require("../utils/roles");
 
@@ -593,6 +598,93 @@ const getKeyUsers = async (req, res) => {
   }
 };
 
+// ── RESET SYSTEM ────────────────────────────────────────────────────────────
+const resetSystem = async (req, res) => {
+  try {
+    // Wipe all data collections in parallel
+    const [
+      students, teachers, classes, fees, payments,
+      results, attendance, assignments, submissions,
+      cumulativeResults, opayPending,
+      admins, principals, hoas, secretaries,
+    ] = await Promise.all([
+      Student.deleteMany({}),
+      Teacher.deleteMany({}),
+      ClassModel.deleteMany({}),
+      Fee.deleteMany({}),
+      Payment.deleteMany({}),
+      Result.deleteMany({}),
+      Attendance.deleteMany({}),
+      Assignment.deleteMany({}),
+      Submission.deleteMany({}),
+      CumulativeResult.deleteMany({}),
+      OPayPending.deleteMany({}),
+      Admin.deleteMany({}),
+      Principal.deleteMany({}),
+      HeadOfActivities.deleteMany({}),
+      Secretary.deleteMany({}),
+    ]);
+
+    // Re-seed default staff accounts
+    const [admin, principal, hoa, secretary] = await Promise.all([
+      Admin.create({
+        fullname: "School Admin",
+        email: "admin@school.com",
+        password: "123456",
+        schoolName: "Marvel Tech Hub School",
+        role: ROLES.ADMIN,
+      }),
+      Principal.create({
+        fullname: "Head Principal",
+        email: "principal@school.com",
+        password: "123456",
+        schoolName: "Marvel Tech Hub School",
+        role: ROLES.PRINCIPAL,
+      }),
+      HeadOfActivities.create({
+        fullname: "Head of Activities",
+        email: "hoa@school.com",
+        password: "123456",
+        schoolName: "Marvel Tech Hub School",
+      }),
+      Secretary.create({
+        fullname: "School Secretary",
+        email: "secretary@school.com",
+        password: "123456",
+        schoolName: "Marvel Tech Hub School",
+      }),
+    ]);
+
+    res.json({
+      success: true,
+      message: "System reset successfully. All data cleared and default accounts restored.",
+      cleared: {
+        students: students.deletedCount,
+        teachers: teachers.deletedCount,
+        classes: classes.deletedCount,
+        fees: fees.deletedCount,
+        payments: payments.deletedCount,
+        results: results.deletedCount,
+        attendance: attendance.deletedCount,
+        assignments: assignments.deletedCount,
+        submissions: submissions.deletedCount,
+        admins: admins.deletedCount,
+        principals: principals.deletedCount,
+        hoas: hoas.deletedCount,
+        secretaries: secretaries.deletedCount,
+      },
+      reseeded: {
+        admin: admin.email,
+        principal: principal.email,
+        hoa: hoa.email,
+        secretary: secretary.email,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
   createAdmin,
   createPrincipal,
@@ -604,6 +696,7 @@ module.exports = {
   deleteClass,
   assignTeacherToClass,
   getClasses,
+  resetSystem,
   getStudents,
   searchStudents,
   getStudentById,

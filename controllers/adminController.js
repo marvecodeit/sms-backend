@@ -598,6 +598,33 @@ const getKeyUsers = async (req, res) => {
   }
 };
 
+// ── GET ALL STAFF (includes teachers) ────────────────────────────────────────
+const getAllStaff = async (req, res) => {
+  try {
+    const [developers, admins, principals, hoas, secretaries, teachers] = await Promise.all([
+      Developer.find().select("fullname email role schoolName createdAt"),
+      Admin.find().select("fullname email role schoolName createdAt"),
+      Principal.find().select("fullname email role schoolName createdAt"),
+      HeadOfActivities.find().select("fullname email role schoolName createdAt"),
+      Secretary.find().select("fullname email role schoolName createdAt"),
+      Teacher.find().select("fullname email role schoolName subject createdAt"),
+    ]);
+
+    const ORDER = ["developer", "admin", "principal", "hoa", "secretary", "teacher"];
+
+    const staff = [
+      ...developers, ...admins, ...principals,
+      ...hoas, ...secretaries, ...teachers,
+    ]
+      .map(u => u.toObject())
+      .sort((a, b) => ORDER.indexOf(a.role) - ORDER.indexOf(b.role));
+
+    res.json({ success: true, total: staff.length, staff });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // ── RESET SYSTEM ────────────────────────────────────────────────────────────
 const resetSystem = async (req, res) => {
   try {
@@ -696,6 +723,7 @@ module.exports = {
   deleteClass,
   assignTeacherToClass,
   getClasses,
+  getAllStaff,
   resetSystem,
   getStudents,
   searchStudents,

@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const xlsx = require("xlsx");
+const axios = require("axios");
 const Result = require("../models/Result");
 const Student = require("../models/Student");
 const ClassModel = require("../models/Class");
@@ -182,10 +183,63 @@ const getClassStudents = async (req, res) => {
   }
 };
 
+// =====================================
+// GOOGLE SHEETS PROXY
+// Returns the sheet as an xlsx buffer so the browser can preview + upload
+// =====================================
+const fetchSheetProxy = async (req, res) => {
+  try {
+    const { url } = req.query;
+    if (!url) return res.status(400).json({ success: false, message: "url query param is required" });
+
+    const match = decodeURIComponent(url).match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]{20,})/);
+    if (!match) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid Google Sheets URL. Make sure it looks like: https://docs.google.com/spreadsheets/d/...",
+      });
+    }
+
+    const fileId    = match[1];
+    const exportUrl = `https://docs.google.com/spreadsheets/d/${fileId}/export?format=xlsx`;
+
+    let response;
+    try {
+      response = await axios.get(exportUrl, {
+        responseType: "arraybuffer",
+        timeout: 30_000,
+        headers: { "User-Agent": "Mozilla/5.0" },
+      });
+    } catch (err) {
+      const status = err.response?.status;
+      if (status === 401 || status === 403) {
+        return res.status(403).json({
+          success: false,
+          message: "Access denied. Set the Google Sheet to 'Anyone with the link can view' and try again.",
+        });
+      }
+      return res.status(502).json({ success: false, message: `Could not fetch sheet: ${err.message}` });
+    }
+
+    // Parse with xlsx and return JSON preview so frontend can display it
+    const workbook  = xlsx.read(Buffer.from(response.data), { type: "buffer" });
+    const sheetName = workbook.SheetNames[0];
+    const rows      = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: "" });
+
+    // Also return raw xlsx as base64 so frontend can re-use it for upload
+    const base64 = Buffer.from(response.data).toString("base64");
+
+    res.json({ success: true, rows, base64, sheetName, totalRows: rows.length });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
   uploadResult,
   getStudentResults,
   getClassStudents,
+  fetchSheetProxy,
   calculateGrade,
   calculatePosition,
 };

@@ -22,6 +22,8 @@ const app = express();
 // ── Middleware ────────────────────────────────────────────
 const ALLOWED_ORIGINS = [
   // Production
+  'https://portal.mercanbrilliantschools.com.ng',
+  'https://www.portal.mercanbrilliantschools.com.ng',
   'https://mbsonline.vercel.app',
   // Local development
   /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/,

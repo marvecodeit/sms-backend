@@ -18,6 +18,7 @@ const {
   uploadResult,
   getStudentResults,
   getClassStudents,
+  fetchSheetProxy,
 } = require("../controllers/resultController");
 
 
@@ -48,6 +49,14 @@ router.get(
   protect,
   authorizeRoles(ROLES.TEACHER, ROLES.ADMIN, ROLES.PRINCIPAL, ROLES.DEVELOPER),
   getClassStudents
+);
+
+// Proxy: fetch Google Sheets as xlsx + parsed JSON for preview
+router.get(
+  "/fetch-sheet",
+  protect,
+  authorizeRoles(ROLES.TEACHER, ROLES.ADMIN, ROLES.PRINCIPAL, ROLES.DEVELOPER),
+  fetchSheetProxy
 );
 
 module.exports = router;

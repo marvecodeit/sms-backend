@@ -12,6 +12,7 @@ const {
   getStudents,
   searchStudents,
   getStudentById,
+  getAllStaff,
   resetSystem,
   getTeachers,
   assignTeacherToClass,
@@ -34,6 +35,7 @@ const router = express.Router();
 router.post("/create-admin",   protect, authorizeRoles(ROLES.DEVELOPER), createAdmin);
 router.get("/key-users",       protect, authorizeRoles(ROLES.DEVELOPER), getKeyUsers);
 router.delete("/reset-system", protect, authorizeRoles(ROLES.DEVELOPER), resetSystem);
+router.get("/all-staff",      protect, authorizeRoles(ROLES.DEVELOPER), getAllStaff);
 
 // ── ADMIN: Create Principal ──────────────────────────────
 router.post("/create-principal", protect, authorizeRoles(ROLES.ADMIN, ROLES.DEVELOPER), createPrincipal);
